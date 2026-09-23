@@ -30,7 +30,7 @@ class HomePage extends StatelessWidget {
                       height: 150.0,
                       color: Colors.white,
                       child: Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.all(16),
                         child: SvgPicture.asset(
                           'assets/images/sendz-transparent.svg',
                           semanticsLabel:

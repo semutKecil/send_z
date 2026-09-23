@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:send_z/app_router.dart';
 import 'package:send_z/core/utils/app_theme.dart';
+import 'package:send_z/core/utils/url_strategy/url_strategy.dart';
 import 'package:send_z/features/receive/bloc/receive_bloc.dart';
 import 'package:send_z/features/send/bloc/send_bloc.dart';
 import 'package:send_z/features/transfer/bloc/transfer_bloc.dart';
@@ -18,44 +19,7 @@ const Map<String, dynamic> defaultRtcConfig = {
 };
 
 void main() {
-  // final file = Message.filesMeta(
-  //   files: [
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //     FileMeta(id: "sdawd", name: "sdawd", size: 0),
-  //   ],
-  // );
-  // final mp = MessagePackager().encode(file);
-
-  // print(mp.length);
-  // print(jsonEncode(file).length);
-
-  // print((MessagePackager().decode(mp)));
-
+  useCleanUrlStrategy();
   runApp(const MyApp());
 }
 
