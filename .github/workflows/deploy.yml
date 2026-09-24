@@ -25,9 +25,10 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
+      - name: Run Build Runner
+        run: dart run build_runner build -d
+
       - name: Build Flutter Web
-        # PENTING: Ganti /NAMA_REPO_KAMU/ dengan nama repository-mu.
-        # Contoh: jika repo bernama 'my-app', ubah menjadi '/my-app/'
         run: flutter build web --release --base-href "/send_z/"
 
       - name: Deploy ke GitHub Pages
