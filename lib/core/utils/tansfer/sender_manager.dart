@@ -253,7 +253,6 @@ class SenderManager extends ConnectionManager {
     peerConnection = null;
 
     logger.d('WebRTC Sender Closed Completely.');
-    logger.d('WebRTC Receiver Closed Completely.');
     if (!disconnect) {
       onDone();
     }

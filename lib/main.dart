@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
@@ -9,7 +10,7 @@ import 'package:send_z/features/send/bloc/send_bloc.dart';
 import 'package:send_z/features/transfer/bloc/transfer_bloc.dart';
 
 final GetIt getIt = GetIt.instance;
-const String baseUrl = "http://localhost:4200";
+String baseUrl = "http://localhost:4200";
 const String defaultRelay = 'wss://nos.lol';
 const Map<String, dynamic> defaultRtcConfig = {
   'iceServers': [
@@ -19,6 +20,9 @@ const Map<String, dynamic> defaultRtcConfig = {
 };
 
 void main() {
+  if (kIsWasm) {
+    baseUrl = Uri.base.host;
+  }
   useCleanUrlStrategy();
   runApp(const MyApp());
 }
