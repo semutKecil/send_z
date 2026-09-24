@@ -18,7 +18,7 @@ class QrDisplay extends StatelessWidget {
       },
       builder: (context, state) {
         String? appCode = state.code;
-        final url = '$baseUrl/$appCode';
+        final url = '$baseUrl$appCode';
         return AnimatedSize(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,

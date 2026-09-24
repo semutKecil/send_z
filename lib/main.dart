@@ -10,7 +10,7 @@ import 'package:send_z/features/send/bloc/send_bloc.dart';
 import 'package:send_z/features/transfer/bloc/transfer_bloc.dart';
 
 final GetIt getIt = GetIt.instance;
-String baseUrl = "http://localhost:4200";
+late final String baseUrl;
 const String defaultRelay = 'wss://nos.lol';
 const Map<String, dynamic> defaultRtcConfig = {
   'iceServers': [
@@ -20,8 +20,11 @@ const Map<String, dynamic> defaultRtcConfig = {
 };
 
 void main() {
-  if (kIsWasm) {
-    baseUrl = Uri.base.host;
+  if (kIsWeb) {
+    baseUrl = "${Uri.base.origin}${Uri.base.path}";
+  } else {
+    //default to repository page. change this with your own
+    baseUrl = "https://semutKecil.github.io/send_z/";
   }
   useCleanUrlStrategy();
   runApp(const MyApp());
