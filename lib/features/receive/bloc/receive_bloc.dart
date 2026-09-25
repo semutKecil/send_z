@@ -38,6 +38,9 @@ class ReceiveBloc extends Bloc<ReceiveEvent, ReceiveState> {
           onRejected: () {
             add(ReceiveEventRejected());
           },
+          onUrlError: () {
+            add(ReceiveEventUrlError());
+          },
         ),
       );
     });
@@ -65,6 +68,10 @@ class ReceiveBloc extends Bloc<ReceiveEvent, ReceiveState> {
     on<ReceiveEventDone>((event, emit) {
       ConnectionManager.close();
       emit(state.copyWith(type: ReceiveStateType.done));
+    });
+
+    on<ReceiveEventUrlError>((event, emit) {
+      emit(state.copyWith(type: ReceiveStateType.urlError));
     });
   }
 }

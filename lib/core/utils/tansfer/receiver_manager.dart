@@ -22,11 +22,13 @@ class ReceiverManager extends ConnectionManager {
   final String code;
   final void Function(List<FileMeta> files) onFileMetaReceived;
   final void Function() onRejected;
+  final void Function() onUrlError;
 
   new({
     required this.code,
     required this.onFileMetaReceived,
     required this.onRejected,
+    required this.onUrlError,
     required super.onConnected,
     required super.onDisconnected,
     required super.onDone,
@@ -72,10 +74,12 @@ class ReceiverManager extends ConnectionManager {
         await signaling?.connect();
         signaling?.connectToSender(npub);
       } else {
-        throw Exception("salah code nih");
+        onUrlError();
+        // throw Exception("Invalid url code");
       }
-    } catch (_) {
-      throw Exception("salah code nih");
+    } catch (e, s) {
+      logger.e('Failed to connect!', error: e, stackTrace: s);
+      onUrlError();
     }
     // 1. Inisialisasi Signaling
   }

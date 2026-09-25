@@ -20,6 +20,8 @@ class ReceiveEventDisconnected extends ReceiveEvent {}
 
 class ReceiveEventDone extends ReceiveEvent {}
 
+class ReceiveEventUrlError extends ReceiveEvent {}
+
 class ReceiveEventConnected extends ReceiveEvent {
   final List<FileMeta> files;
   new({required this.files});

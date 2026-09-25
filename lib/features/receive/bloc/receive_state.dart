@@ -4,6 +4,7 @@ enum ReceiveStateType {
   initialized,
   connected,
   error,
+  urlError,
   disconnected,
   done,
   rejected,

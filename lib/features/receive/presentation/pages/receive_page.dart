@@ -86,6 +86,29 @@ class _ReceivePageState extends State<ReceivePage> {
     }
   }
 
+  Future<void> _onUrlError(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Invalid Url"),
+          content: Text("Url you used are invalid"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+    if (context.mounted) {
+      AutoRouter.of(context).replacePath("/");
+    }
+  }
+
   Future<void> _onDisconnected(BuildContext context) async {
     await showDialog(
       context: context,
@@ -175,6 +198,9 @@ class _ReceivePageState extends State<ReceivePage> {
           case ReceiveStateType.rejected:
             _onRejected(context);
             break;
+          case ReceiveStateType.urlError:
+            _onUrlError(context);
+            break;
         }
       },
       child: Scaffold(
@@ -207,6 +233,7 @@ class _ReceivePageState extends State<ReceivePage> {
                     case ReceiveStateType.error:
                     case ReceiveStateType.disconnected:
                     case ReceiveStateType.done:
+                    case ReceiveStateType.urlError:
                     case ReceiveStateType.rejected:
                       content = SizedBox.shrink(key: ValueKey("none"));
                       break;

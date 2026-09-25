@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:send_z/features/home/presentation/widget/scanner.dart';
 
 class ReceiverInput extends StatefulWidget {
   const new({super.key});
@@ -29,29 +33,55 @@ class _ReceiverInputState extends State<ReceiverInput> {
   @override
   Widget build(BuildContext context) {
     return Row(
-      spacing: 10,
       children: [
-        SizedBox(
-          height: 42,
-          child: FilledButton(
-            onPressed: () {},
-            style: FilledButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.all(0),
-            ),
-            child: Icon(Icons.qr_code_scanner),
-          ),
-        ),
+        kIsWeb || Platform.isAndroid || Platform.isIOS
+            ? Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: SizedBox(
+                  height: 42,
+                  child: FilledButton(
+                    onPressed: () async {
+                      final qrData = await Navigator.of(context).push<String?>(
+                        MaterialPageRoute(
+                          builder: (context) {
+                            return Scanner(
+                              onDetect: (barcode) {
+                                final qrValue =
+                                    barcode?.barcodes.firstOrNull?.rawValue;
+                                if (qrValue == null) return;
+                                Navigator.of(context).pop(qrValue);
+                              },
+                            );
+                          },
+                        ),
+                      );
+                      if (qrData != null) {
+                        _goToReceive(qrData);
+                      }
+                    },
+                    style: FilledButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.all(0),
+                    ),
+                    child: Icon(Icons.qr_code_scanner),
+                  ),
+                ),
+              )
+            : SizedBox.shrink(),
         Expanded(
           child: TextField(
             controller: urlController,
             decoration: InputDecoration(
               hintText: "Insert Sendz Url or Scan QR",
+              // prefixIcon: FilledButton(
+              //   onPressed: () {},
+              //   child: Icon(Icons.qr_code_scanner),
+              // ),
             ),
             onSubmitted: _goToReceive,
           ),
         ),
-
+        SizedBox(width: 10),
         SizedBox(
           height: 42,
           child: FilledButton(
