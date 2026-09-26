@@ -20,9 +20,9 @@ class HomePage extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 spacing: 10,
                 children: [
+                  Spacer(flex: 2),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
@@ -69,6 +69,7 @@ class HomePage extends StatelessWidget {
                   ),
                   const Divider(),
                   const ReceiverInput(),
+                  Spacer(flex: 7),
                 ],
               ),
             ),
