@@ -22,14 +22,12 @@ class ReceiverManager extends ConnectionManager {
   final String code;
   final void Function(List<FileMeta> files) onFileMetaReceived;
   final void Function() onRejected;
-  final void Function() onNoAnswer;
   final void Function() onUrlError;
 
   new({
     required this.code,
     required this.onFileMetaReceived,
     required this.onRejected,
-    required this.onNoAnswer,
     required this.onUrlError,
     required super.onConnected,
     required super.onDisconnected,
@@ -72,13 +70,9 @@ class ReceiverManager extends ConnectionManager {
             await closeWebRTC(disconnect: true, fromMessage: true);
             onRejected();
           },
-          onNoAnswer: () async {
-            await closeWebRTC(disconnect: true, fromMessage: true);
-            onNoAnswer();
-          },
         );
         await signaling?.connect();
-        signaling?.connectToSender(npub);
+        await signaling?.connectToSender(npub);
       } else {
         onUrlError();
         // throw Exception("Invalid url code");

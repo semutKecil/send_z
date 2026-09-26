@@ -41,9 +41,6 @@ class ReceiveBloc extends Bloc<ReceiveEvent, ReceiveState> {
           onUrlError: () {
             add(ReceiveEventUrlError());
           },
-          onNoAnswer: () {
-            add(ReceiveEventNotAnswered());
-          },
         ),
       );
     });
@@ -75,10 +72,6 @@ class ReceiveBloc extends Bloc<ReceiveEvent, ReceiveState> {
 
     on<ReceiveEventUrlError>((event, emit) {
       emit(state.copyWith(type: ReceiveStateType.urlError));
-    });
-
-    on<ReceiveEventDone>((event, emit) {
-      emit(state.copyWith(type: ReceiveStateType.notAnswered));
     });
   }
 }

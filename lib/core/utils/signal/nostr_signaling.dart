@@ -15,14 +15,11 @@ class NostrSignaling {
   final Role role;
   final void Function() onConnected;
   final void Function() onRejected;
-  final void Function() onNoAnswer;
 
   late Keys _myKeychain;
   String? peerHexPubKey;
 
   late final SocketPool _socketPool;
-  Completer<bool>? _receiverCompleter;
-  Timer? _receiverTimer;
 
   bool _dispose = false;
   final Set<String> _eventReceived = {};
@@ -40,7 +37,6 @@ class NostrSignaling {
     required this.role,
     required this.onConnected,
     required this.onRejected,
-    required this.onNoAnswer,
     required this.relays,
   }) {
     _myKeychain = Keys.generate();
@@ -69,22 +65,8 @@ class NostrSignaling {
     if (role != Role.receiver) return;
     logger.d("get pubhex $senderNpub");
     peerHexPubKey = Nip19.decode(payload: senderNpub).data;
-    _receiverCompleter = Completer();
     _sendNostrMessage({'type': 'init_handshake', 'message': 'Receiver ready'});
-    _receiverTimer = Timer(Duration(seconds: 5), () {
-      if (_receiverCompleter?.isCompleted == false) {
-        _receiverCompleter?.complete(false);
-      }
-    });
-    final complete = await _receiverCompleter?.future;
-    if (complete == true) {
-      onConnected();
-    } else {
-      onNoAnswer();
-      //no signal
-    }
-
-    // onConnected();
+    onConnected();
   }
 
   /// 3. Mengirim SDP Offer (Sender -> Receiver)
@@ -125,7 +107,7 @@ class NostrSignaling {
   /// Handle pesan WebSocket yang masuk dari Nostr Relay
   void _handleIncomingMessage(dynamic rawMessage) async {
     final List<dynamic> decoded = jsonDecode(rawMessage);
-    logger.d('rececived message $decoded');
+
     final String messageType = decoded[0];
 
     if (messageType == 'EVENT') {
@@ -146,6 +128,7 @@ class NostrSignaling {
 
         final List<dynamic> payloads = jsonDecode(decryptedJson);
         for (var payload in payloads) {
+          logger.d('rececived message $payload');
           final String payloadType = payload['type'];
           switch (payloadType) {
             case 'init_handshake':
@@ -159,20 +142,10 @@ class NostrSignaling {
                   peerHexPubKey = senderPubKey;
                   onConnected();
                   onPeerConnected?.call(senderPubKey);
-
-                  await _sendNostrMessage({
-                    'type': 'confirm',
-                    'sdp': 'confirmed start send',
-                  });
                 }
               }
               break;
-            case 'confirm':
-              if (role == Role.receiver) {
-                _receiverCompleter?.complete(true);
-                _receiverTimer?.cancel();
-              }
-              break;
+
             case 'reject':
               onRejected();
               break;
@@ -235,7 +208,7 @@ class NostrSignaling {
       );
 
       final String request = jsonEncode(["EVENT", event.toMap()]);
-      logger.d("send ecrypt $encodedMessage");
+      logger.d("send message $encodedMessage");
       _socketPool.send(request);
       // _channel?.sink.add(request);
       _messageBuffer.clear();

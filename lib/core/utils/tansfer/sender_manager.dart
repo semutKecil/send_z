@@ -73,7 +73,6 @@ class SenderManager extends ConnectionManager {
         };
       },
       onRejected: () {},
-      onNoAnswer: () {},
     );
     await _signaling?.connect();
     codeGenerated(

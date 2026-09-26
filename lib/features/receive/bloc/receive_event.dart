@@ -16,8 +16,6 @@ class ReceiveEventStoped extends ReceiveEvent {}
 
 class ReceiveEventRejected extends ReceiveEvent {}
 
-class ReceiveEventNotAnswered extends ReceiveEvent {}
-
 class ReceiveEventDisconnected extends ReceiveEvent {}
 
 class ReceiveEventDone extends ReceiveEvent {}

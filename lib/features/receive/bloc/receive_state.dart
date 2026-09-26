@@ -8,7 +8,6 @@ enum ReceiveStateType {
   disconnected,
   done,
   rejected,
-  notAnswered,
 }
 
 @freezed

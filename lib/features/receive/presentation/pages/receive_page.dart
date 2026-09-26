@@ -109,29 +109,6 @@ class _ReceivePageState extends State<ReceivePage> {
     }
   }
 
-  Future<void> _onNotAnswered(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("No Response"),
-          content: Text("Sender not responding."),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("OK"),
-            ),
-          ],
-        );
-      },
-    );
-    if (context.mounted) {
-      AutoRouter.of(context).replacePath("/");
-    }
-  }
-
   Future<void> _onDisconnected(BuildContext context) async {
     await showDialog(
       context: context,
@@ -224,66 +201,68 @@ class _ReceivePageState extends State<ReceivePage> {
           case ReceiveStateType.urlError:
             _onUrlError(context);
             break;
-          case ReceiveStateType.notAnswered:
-            _onNotAnswered(context);
-            break;
         }
       },
       child: Scaffold(
         appBar: AppBar(title: Text("Receive FIles")),
         body: DefaultBody(
-          child: Column(
-            spacing: 10,
-            children: [
-              BlocBuilder<ReceiveBloc, ReceiveState>(
-                builder: (context, state) {
-                  final Widget content;
-                  switch (state.type) {
-                    case ReceiveStateType.initialized:
-                      content = Row(
-                        mainAxisSize: MainAxisSize.min,
-                        key: ValueKey("initializing"),
-                        spacing: 10,
-                        children: [
-                          SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(),
-                          ),
-                          Text("Waiting for connection..."),
-                        ],
-                      );
-                      break;
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Column(
+              spacing: 10,
+              children: [
+                BlocBuilder<ReceiveBloc, ReceiveState>(
+                  builder: (context, state) {
+                    final Widget content;
+                    switch (state.type) {
+                      case ReceiveStateType.initialized:
+                        content = Row(
+                          mainAxisSize: MainAxisSize.min,
+                          key: ValueKey("initializing"),
+                          spacing: 10,
+                          children: [
+                            SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(),
+                            ),
+                            Text("Waiting for connection..."),
+                          ],
+                        );
+                        break;
 
-                    case ReceiveStateType.connected:
-                    case ReceiveStateType.error:
-                    case ReceiveStateType.disconnected:
-                    case ReceiveStateType.done:
-                    case ReceiveStateType.urlError:
-                    case ReceiveStateType.notAnswered:
-                    case ReceiveStateType.rejected:
-                      content = SizedBox.shrink(key: ValueKey("none"));
-                      break;
-                  }
-                  return AnimatedSwitcher(
-                    duration: Duration(milliseconds: 300),
-                    child: content,
-                  );
-                },
-              ),
+                      case ReceiveStateType.connected:
+                      case ReceiveStateType.error:
+                      case ReceiveStateType.disconnected:
+                      case ReceiveStateType.done:
+                      case ReceiveStateType.urlError:
+                      case ReceiveStateType.rejected:
+                        content = SizedBox.shrink(key: ValueKey("none"));
+                        break;
+                    }
+                    return AnimatedSwitcher(
+                      duration: Duration(milliseconds: 300),
+                      child: content,
+                    );
+                  },
+                ),
 
-              SizedBox(height: 10),
-              BlocBuilder<ReceiveBloc, ReceiveState>(
-                buildWhen: (previous, current) {
-                  return previous.type != current.type &&
-                      (previous.type == ReceiveStateType.connected ||
-                          current.type == ReceiveStateType.connected);
-                },
-                builder: (context, state) {
-                  return Expanded(flex: 2, child: FileList(files: state.files));
-                },
-              ),
-            ],
+                SizedBox(height: 10),
+                BlocBuilder<ReceiveBloc, ReceiveState>(
+                  buildWhen: (previous, current) {
+                    return previous.type != current.type &&
+                        (previous.type == ReceiveStateType.connected ||
+                            current.type == ReceiveStateType.connected);
+                  },
+                  builder: (context, state) {
+                    return Expanded(
+                      flex: 2,
+                      child: FileList(files: state.files),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
