@@ -3,8 +3,7 @@ body{
 }
 
 .loader-text {
-      position: absolute;
-      top: 0;
+      position: absolute;  
       bottom: 0;
       left: 0;
       right: 0;
@@ -23,7 +22,7 @@ body{
   width: 100vw;            /* Full viewport width */
   height: 100vh;           /* Full viewport height */
   position: fixed;         /* Stays in place even when scrolling */
-  top: -100px;
+  top: 0;
   left: 0;         /* Keeps it on top of all other elements */
 }
 
