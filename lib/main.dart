@@ -12,7 +12,11 @@ import 'package:send_z/features/transfer/bloc/transfer_bloc.dart';
 final GetIt getIt = GetIt.instance;
 const hashRouting = true;
 late final String baseUrl;
-const String defaultRelay = 'wss://nos.lol';
+const List<String> defaultRelay = [
+  'wss://nos.lol',
+  'wss://relay.damus.io',
+  'wss://relay.snort.social',
+];
 const Map<String, dynamic> defaultRtcConfig = {
   'iceServers': [
     {'urls': 'stun:stun.l.google.com:19302'},

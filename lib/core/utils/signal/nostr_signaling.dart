@@ -5,22 +5,27 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:nostr/nostr.dart';
 import 'package:send_z/core/utils/debouncer.dart';
 import 'package:send_z/core/utils/logger.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
+
+import 'socket_pool.dart';
 
 enum Role { sender, receiver }
 
 class NostrSignaling {
-  final String relayUrl;
+  final List<String> relays;
   final Role role;
   final void Function() onConnected;
   final void Function() onRejected;
+  final void Function() onNoAnswer;
 
   late Keys _myKeychain;
   String? peerHexPubKey;
 
-  WebSocketChannel? _channel;
-  StreamSubscription? _socketSubscription;
+  late final SocketPool _socketPool;
+  Completer<bool>? _receiverCompleter;
+  Timer? _receiverTimer;
+
   bool _dispose = false;
+  final Set<String> _eventReceived = {};
 
   final List<Map<String, dynamic>> _messageBuffer = [];
   final Debouncer _messageDebouncer = Debouncer(milliseconds: 500);
@@ -35,9 +40,9 @@ class NostrSignaling {
     required this.role,
     required this.onConnected,
     required this.onRejected,
-    required this.relayUrl,
+    required this.onNoAnswer,
+    required this.relays,
   }) {
-    // Generate ephemeral keypair saat instansiasi
     _myKeychain = Keys.generate();
     logger.d('nsec generated ${_myKeychain.nsec}');
   }
@@ -47,41 +52,39 @@ class NostrSignaling {
 
   Future<void> connect() async {
     if (_dispose) return;
-    try {
-      _channel = WebSocketChannel.connect(Uri.parse(relayUrl));
-      await _channel!.ready;
-      if (_dispose) return;
-      logger.d('websocket channel ready');
-      _socketSubscription = _channel!.stream.listen(
-        (message) => _handleIncomingMessage(message),
-        onError: (err, s) =>
-            logger.e('WebSocket Error', error: err, stackTrace: s),
-        onDone: () {},
-      );
-
-      _subscribeToMyEvents();
-    } catch (e, s) {
-      if (_dispose) return;
-      logger.d(
-        'Koneksi putus. Mencoba menghubungkan kembali dalam 5 detik... \n $e \n\n$s',
-      );
-      await Future.delayed(Duration(seconds: 3));
-      if (_dispose) return;
-      await connect();
-    }
+    _socketPool = SocketPool(
+      relays: relays,
+      onConnected: () {
+        _subscribeToMyEvents();
+      },
+      onMessageReceived: (message) {
+        _handleIncomingMessage(message);
+      },
+    );
+    await _socketPool.connect();
   }
 
   /// 2. Receiver Inisialisasi Handshake ke Sender via Npub dari URL
-  void connectToSender(String senderNpub) {
+  Future<void> connectToSender(String senderNpub) async {
     if (role != Role.receiver) return;
-
     logger.d("get pubhex $senderNpub");
-
     peerHexPubKey = Nip19.decode(payload: senderNpub).data;
-
-    // Kirim Hello/Init Event agar Sender tahu PubKey milik Receiver
+    _receiverCompleter = Completer();
     _sendNostrMessage({'type': 'init_handshake', 'message': 'Receiver ready'});
-    onConnected();
+    _receiverTimer = Timer(Duration(seconds: 5), () {
+      if (_receiverCompleter?.isCompleted == false) {
+        _receiverCompleter?.complete(false);
+      }
+    });
+    final complete = await _receiverCompleter?.future;
+    if (complete == true) {
+      onConnected();
+    } else {
+      onNoAnswer();
+      //no signal
+    }
+
+    // onConnected();
   }
 
   /// 3. Mengirim SDP Offer (Sender -> Receiver)
@@ -111,13 +114,12 @@ class NostrSignaling {
   /// Subscribe Filter REQ ke Nostr Relay
   void _subscribeToMyEvents() {
     final filter = {
-      // Kind 44: Standard NIP-44 Encrypted Direct Message
       "kinds": [44],
-      "#p": [_myKeychain.public], // Filter berdasarkan p-tag kita
+      "#p": [_myKeychain.public],
     };
     final request = jsonEncode(["REQ", "sendz_signaling", filter]);
     logger.d('send init $request');
-    _channel?.sink.add(request);
+    _socketPool.send(request);
   }
 
   /// Handle pesan WebSocket yang masuk dari Nostr Relay
@@ -128,6 +130,10 @@ class NostrSignaling {
 
     if (messageType == 'EVENT') {
       final Map<String, dynamic> eventMap = decoded[2];
+      final String eventId = eventMap['id'];
+
+      if (_eventReceived.contains(eventId)) return;
+      _eventReceived.add(eventId);
       final String senderPubKey = eventMap['pubkey'];
       final String encryptedContent = eventMap['content'];
 
@@ -153,13 +159,23 @@ class NostrSignaling {
                   peerHexPubKey = senderPubKey;
                   onConnected();
                   onPeerConnected?.call(senderPubKey);
+
+                  await _sendNostrMessage({
+                    'type': 'confirm',
+                    'sdp': 'confirmed start send',
+                  });
                 }
+              }
+              break;
+            case 'confirm':
+              if (role == Role.receiver) {
+                _receiverCompleter?.complete(true);
+                _receiverTimer?.cancel();
               }
               break;
             case 'reject':
               onRejected();
               break;
-
             case 'offer':
               final sdpMap = Map<String, dynamic>.from(payload['sdp']);
               onOfferReceived?.call(
@@ -218,13 +234,10 @@ class NostrSignaling {
         ],
       );
 
-      // Sign Event dengan Private Key Ephemeral
-      // event.sign(_myKeychain.private);
-
-      // Kirim via WebSocket
       final String request = jsonEncode(["EVENT", event.toMap()]);
       logger.d("send ecrypt $encodedMessage");
-      _channel?.sink.add(request);
+      _socketPool.send(request);
+      // _channel?.sink.add(request);
       _messageBuffer.clear();
     });
   }
@@ -232,7 +245,6 @@ class NostrSignaling {
   /// Clean Up Socket Connections
   void dispose() {
     _dispose = true;
-    _socketSubscription?.cancel();
-    _channel?.sink.close();
+    _socketPool.close();
   }
 }

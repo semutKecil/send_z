@@ -19,7 +19,7 @@ class SenderManager extends ConnectionManager {
   RTCDataChannel? controlChannel;
   RTCDataChannel? fileChannel;
   NostrSignaling? _signaling;
-  final String relay;
+  final List<String> relays;
   final Map<String, dynamic> webRtcConfig;
   final List<PlatformFile> files;
 
@@ -32,7 +32,7 @@ class SenderManager extends ConnectionManager {
     required super.onDone,
     required super.onTransferFile,
     required this.codeGenerated,
-    this.relay = defaultRelay,
+    this.relays = defaultRelay,
     this.webRtcConfig = defaultRtcConfig,
   });
 
@@ -41,7 +41,7 @@ class SenderManager extends ConnectionManager {
     // 1. Inisialisasi Signaling
     _signaling = NostrSignaling(
       role: Role.sender,
-      relayUrl: relay,
+      relays: relays,
       onConnected: () async {
         // 2. Buat WebRTC PeerConnection
         peerConnection = await createPeerConnection(webRtcConfig);
@@ -73,12 +73,13 @@ class SenderManager extends ConnectionManager {
         };
       },
       onRejected: () {},
+      onNoAnswer: () {},
     );
     await _signaling?.connect();
     codeGenerated(
       MessagePackager().encode(
         ConnectionCode.nostrWebRtc(
-          relay: relay,
+          relays: relays,
           npub: _signaling!.shareableNpub,
           rtcConf: webRtcConfig,
         ),

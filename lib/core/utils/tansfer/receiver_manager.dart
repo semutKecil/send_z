@@ -22,12 +22,14 @@ class ReceiverManager extends ConnectionManager {
   final String code;
   final void Function(List<FileMeta> files) onFileMetaReceived;
   final void Function() onRejected;
+  final void Function() onNoAnswer;
   final void Function() onUrlError;
 
   new({
     required this.code,
     required this.onFileMetaReceived,
     required this.onRejected,
+    required this.onNoAnswer,
     required this.onUrlError,
     required super.onConnected,
     required super.onDisconnected,
@@ -39,10 +41,10 @@ class ReceiverManager extends ConnectionManager {
   Future<void> connect() async {
     try {
       final ConnectionCode cc = MessagePackager().decode(code);
-      if (cc case CodeNostrWebRtc(:final relay, :final npub, :final rtcConf)) {
+      if (cc case CodeNostrWebRtc(:final relays, :final npub, :final rtcConf)) {
         signaling = NostrSignaling(
           role: Role.receiver,
-          relayUrl: relay,
+          relays: relays,
           onConnected: () async {
             peerConnection = await createPeerConnection(rtcConf);
 
@@ -69,6 +71,10 @@ class ReceiverManager extends ConnectionManager {
           onRejected: () async {
             await closeWebRTC(disconnect: true, fromMessage: true);
             onRejected();
+          },
+          onNoAnswer: () async {
+            await closeWebRTC(disconnect: true, fromMessage: true);
+            onNoAnswer();
           },
         );
         await signaling?.connect();

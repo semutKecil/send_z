@@ -109,6 +109,29 @@ class _ReceivePageState extends State<ReceivePage> {
     }
   }
 
+  Future<void> _onNotAnswered(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("No Response"),
+          content: Text("Sender not responding."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+    if (context.mounted) {
+      AutoRouter.of(context).replacePath("/");
+    }
+  }
+
   Future<void> _onDisconnected(BuildContext context) async {
     await showDialog(
       context: context,
@@ -201,6 +224,9 @@ class _ReceivePageState extends State<ReceivePage> {
           case ReceiveStateType.urlError:
             _onUrlError(context);
             break;
+          case ReceiveStateType.notAnswered:
+            _onNotAnswered(context);
+            break;
         }
       },
       child: Scaffold(
@@ -234,6 +260,7 @@ class _ReceivePageState extends State<ReceivePage> {
                     case ReceiveStateType.disconnected:
                     case ReceiveStateType.done:
                     case ReceiveStateType.urlError:
+                    case ReceiveStateType.notAnswered:
                     case ReceiveStateType.rejected:
                       content = SizedBox.shrink(key: ValueKey("none"));
                       break;

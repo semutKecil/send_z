@@ -7,7 +7,7 @@ part 'connection_code.g.dart';
 sealed class ConnectionCode with _$ConnectionCode {
   const factory ConnectionCode.nostrWebRtc({
     required String npub,
-    required String relay,
+    required List<String> relays,
     required Map<String, dynamic> rtcConf,
   }) = CodeNostrWebRtc;
 
