@@ -4,6 +4,8 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:send_z/features/home/presentation/widget/scanner.dart';
+import 'package:send_z/main.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ReceiverInput extends StatefulWidget {
   const new({super.key});
@@ -21,13 +23,23 @@ class _ReceiverInputState extends State<ReceiverInput> {
     super.dispose();
   }
 
-  void _goToReceive(BuildContext context, String code) {
+  void _goToReceive(BuildContext context, String code) async {
     String cleanCode = code;
     if (code.contains("/")) {
       cleanCode = code.split("/").last;
     }
 
-    AutoRouter.of(context).replacePath("/$cleanCode");
+    if (kIsWeb) {
+      if (!await launchUrl(
+        Uri.parse('$baseUrl#/$cleanCode'),
+        // '_blank' untuk tab baru, '_self' untuk tab yang sama
+        webOnlyWindowName: '_self',
+      )) {
+        throw Exception('Tidak dapat membuka $baseUrl#/$cleanCode');
+      }
+    } else {
+      AutoRouter.of(context).replacePath("/$cleanCode");
+    }
   }
 
   @override
