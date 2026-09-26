@@ -60,13 +60,30 @@ class NostrSignaling {
     await _socketPool.connect();
   }
 
+  Completer<bool>? _receiverComplete;
+  Timer? _receiverTimer;
+
   /// 2. Receiver Inisialisasi Handshake ke Sender via Npub dari URL
   Future<void> connectToSender(String senderNpub) async {
     if (role != Role.receiver) return;
     logger.d("get pubhex $senderNpub");
     peerHexPubKey = Nip19.decode(payload: senderNpub).data;
+    _receiverComplete = Completer();
     _sendNostrMessage({'type': 'init_handshake', 'message': 'Receiver ready'});
-    onConnected();
+    _receiverTimer = Timer(Duration(seconds: 10), () {
+      if (_receiverComplete?.isCompleted == false) {
+        _receiverComplete?.complete(false);
+      }
+    });
+
+    if ((await _receiverComplete?.future) == true) {
+      await _sendNostrMessage({'type': 'start', 'sdp': 'start-send'});
+      onConnected();
+    } else {
+      onRejected();
+    }
+
+    // onConnected();
   }
 
   /// 3. Mengirim SDP Offer (Sender -> Receiver)
@@ -140,12 +157,28 @@ class NostrSignaling {
                   }, pubKey: senderPubKey);
                 } else {
                   peerHexPubKey = senderPubKey;
-                  onConnected();
-                  onPeerConnected?.call(senderPubKey);
+
+                  await _sendNostrMessage({
+                    'type': 'confirm',
+                    'sdp': 'confirmed',
+                  });
                 }
               }
               break;
-
+            case 'start':
+              if (role == Role.sender) {
+                logger.d("start connection");
+                onConnected();
+                onPeerConnected?.call(senderPubKey);
+              }
+              break;
+            case 'confirm':
+              if (role == Role.receiver) {
+                logger.d("confirmed connection");
+                _receiverTimer?.cancel();
+                _receiverComplete?.complete(true);
+              }
+              break;
             case 'reject':
               onRejected();
               break;

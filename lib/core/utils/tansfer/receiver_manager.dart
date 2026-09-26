@@ -45,9 +45,7 @@ class ReceiverManager extends ConnectionManager {
           relays: relays,
           onConnected: () async {
             peerConnection = await createPeerConnection(rtcConf);
-
             _setupReceiverListeners();
-
             peerConnection?.onIceCandidate = (candidate) {
               signaling?.sendIceCandidate(candidate);
             };
