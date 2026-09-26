@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class Scanner extends StatelessWidget {
-  final void Function(BarcodeCapture? barcode) onDetect;
+  final void Function(String barcode) onDetect;
   const new({super.key, required this.onDetect});
 
   @override
@@ -12,7 +12,13 @@ class Scanner extends StatelessWidget {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          MobileScanner(onDetect: onDetect),
+          MobileScanner(
+            onDetect: (barcodes) {
+              final barcodeString = barcodes.barcodes.firstOrNull?.rawValue;
+              if (barcodeString == null) return;
+              onDetect(barcodeString);
+            },
+          ),
           // Align(
           //   alignment: Alignment.bottomCenter,
           //   child: Container(

@@ -21,7 +21,7 @@ class _ReceiverInputState extends State<ReceiverInput> {
     super.dispose();
   }
 
-  void _goToReceive(String code) {
+  void _goToReceive(BuildContext context, String code) {
     String cleanCode = code;
     if (code.contains("/")) {
       cleanCode = code.split("/").last;
@@ -46,17 +46,14 @@ class _ReceiverInputState extends State<ReceiverInput> {
                           builder: (context) {
                             return Scanner(
                               onDetect: (barcode) {
-                                final qrValue =
-                                    barcode?.barcodes.firstOrNull?.rawValue;
-                                if (qrValue == null) return;
-                                Navigator.of(context).pop(qrValue);
+                                Navigator.of(context).pop(barcode);
                               },
                             );
                           },
                         ),
                       );
-                      if (qrData != null) {
-                        _goToReceive(qrData);
+                      if (qrData != null && context.mounted) {
+                        _goToReceive(context, qrData);
                       }
                     },
                     style: FilledButton.styleFrom(
@@ -78,7 +75,9 @@ class _ReceiverInputState extends State<ReceiverInput> {
               //   child: Icon(Icons.qr_code_scanner),
               // ),
             ),
-            onSubmitted: _goToReceive,
+            onSubmitted: (value) {
+              _goToReceive(context, value);
+            },
           ),
         ),
         SizedBox(width: 10),
@@ -86,7 +85,7 @@ class _ReceiverInputState extends State<ReceiverInput> {
           height: 42,
           child: FilledButton(
             onPressed: () {
-              _goToReceive(urlController.text);
+              _goToReceive(context, urlController.text);
             },
             style: FilledButton.styleFrom(
               visualDensity: VisualDensity.compact,

@@ -74,8 +74,7 @@ class ReceiverManager extends ConnectionManager {
         await signaling?.connect();
         await signaling?.connectToSender(npub);
       } else {
-        onUrlError();
-        // throw Exception("Invalid url code");
+        throw Exception("Invalid url code");
       }
     } catch (e, s) {
       logger.e('Failed to connect!', error: e, stackTrace: s);
