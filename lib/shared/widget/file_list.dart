@@ -8,15 +8,12 @@ class FileList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: ListView.builder(
-        itemBuilder: (context, index) {
-          final file = files[index];
-          return FileTransfer(file: file);
-        },
-        itemCount: files.length,
-      ),
+    return SliverList.builder(
+      itemBuilder: (context, index) {
+        final file = files[index];
+        return FileTransfer(file: file);
+      },
+      itemCount: files.length,
     );
   }
 }

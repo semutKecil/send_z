@@ -170,24 +170,31 @@ class _SendPageState extends State<SendPage> {
         child: Scaffold(
           appBar: AppBar(title: Text("Send Files")),
           body: DefaultBody(
-            child: Column(
-              spacing: 10,
-              children: [
-                QrDisplay(),
-                LoadingMessage(),
-                SizedBox(height: 10),
-                BlocBuilder<SendBloc, SendState>(
-                  buildWhen: (previous, current) {
-                    return (previous.type != current.type &&
-                        (previous.type == SendStateType.started ||
-                            current.type == SendStateType.started));
-                  },
-                  builder: (context, state) {
-                    return Expanded(
-                      flex: 2,
-                      child: FileList(files: state.files),
-                    );
-                  },
+            child: CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.only(top: 5, bottom: 15),
+                  sliver: SliverToBoxAdapter(child: QrDisplay()),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.only(top: 5, bottom: 15),
+                  sliver: SliverToBoxAdapter(child: LoadingMessage()),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(vertical: 5),
+                  sliver: BlocBuilder<SendBloc, SendState>(
+                    buildWhen: (previous, current) {
+                      return (previous.type != current.type &&
+                          (previous.type == SendStateType.started ||
+                              current.type == SendStateType.started));
+                    },
+                    builder: (context, state) {
+                      return Expanded(
+                        flex: 2,
+                        child: FileList(files: state.files),
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
