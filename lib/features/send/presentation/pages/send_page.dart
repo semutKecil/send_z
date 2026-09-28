@@ -172,6 +172,10 @@ class _SendPageState extends State<SendPage> {
           body: DefaultBody(
             child: CustomScrollView(
               slivers: [
+                // SliverAppBar(
+                //   expandedHeight: 500,
+                //   flexibleSpace: SingleChildScrollView(child: QrDisplay()),
+                // ),
                 SliverPadding(
                   padding: const EdgeInsets.only(top: 5, bottom: 15),
                   sliver: SliverToBoxAdapter(child: QrDisplay()),
@@ -189,10 +193,7 @@ class _SendPageState extends State<SendPage> {
                               current.type == SendStateType.started));
                     },
                     builder: (context, state) {
-                      return Expanded(
-                        flex: 2,
-                        child: FileList(files: state.files),
-                      );
+                      return FileList(files: state.files);
                     },
                   ),
                 ),

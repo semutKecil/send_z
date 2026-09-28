@@ -40,15 +40,12 @@ class QrDisplay extends StatelessWidget {
                 spacing: 10,
                 children: [
                   Text("Scan QR or copy url bellow to receive files"),
-                  Container(
-                    constraints: BoxConstraints(maxWidth: 350, maxHeight: 350),
-                    child: Card(
-                      color: Colors.white,
-                      child: PrettyQrView.data(
-                        data: url,
-                        decoration: const PrettyQrDecoration(
-                          quietZone: PrettyQrQuietZone.pixels(10),
-                        ),
+                  Card(
+                    color: Colors.white,
+                    child: PrettyQrView.data(
+                      data: url,
+                      decoration: const PrettyQrDecoration(
+                        quietZone: PrettyQrQuietZone.pixels(10),
                       ),
                     ),
                   ),
