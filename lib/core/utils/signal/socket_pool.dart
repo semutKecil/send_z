@@ -22,20 +22,26 @@ class SocketPool {
       _singleConnect(relay);
     }
 
-    await connected.future;
-    logger.d("relay connected");
-    onConnected();
+    if (await _connected.future) {
+      logger.d("relay connected");
+      onConnected();
+    }
   }
 
-  final Completer<bool> connected = Completer();
+  final Completer<bool> _connected = Completer();
 
   final List<String> _sentHistory = [];
+  bool _closeReq = false;
 
   Future<void> _singleConnect(String relay) async {
     try {
+      if (_closeReq && !_connected.isCompleted) {
+        _connected.complete(false);
+        return;
+      }
       logger.d("try to connect to $relay");
-      final channel = WebSocketChannel.connect(Uri.parse(relays[0]));
-      await channel.ready.timeout(Duration(seconds: 7));
+      final channel = WebSocketChannel.connect(Uri.parse(relay));
+      await channel.ready.timeout(Duration(seconds: 10));
 
       channelManager[relay] = SocketChannel(
         channel: channel,
@@ -44,10 +50,14 @@ class SocketPool {
         }),
       )..sendAll(_sentHistory);
 
-      if (connected.isCompleted == false) {
-        connected.complete(true);
+      if (_connected.isCompleted == false) {
+        _connected.complete(true);
       }
     } catch (e, s) {
+      if (_closeReq && !_connected.isCompleted) {
+        _connected.complete(false);
+        return;
+      }
       logger.e("failed to connect to socket $relay", error: e, stackTrace: s);
       await Future.delayed(Duration(seconds: 3));
       _singleConnect(relay);
@@ -62,6 +72,7 @@ class SocketPool {
   }
 
   Future<void> close() async {
+    _closeReq = true;
     for (var mng in channelManager.values) {
       mng.close();
     }

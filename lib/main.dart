@@ -15,7 +15,8 @@ late final String baseUrl;
 const List<String> defaultRelay = [
   'wss://nos.lol',
   'wss://relay.damus.io',
-  'wss://relay.snort.social',
+  'wss://offchain.pub',
+  'wss://relay.primal.net',
 ];
 const Map<String, dynamic> defaultRtcConfig = {
   'iceServers': [

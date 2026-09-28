@@ -43,14 +43,14 @@ class SendBloc extends Bloc<SendEvent, SendState> {
           },
         ),
       );
-      // .then((value) {
-      //   add(SendEventLinkGenerated(code: value.signaling!.shareableNpub));
-      // });
     });
 
     on<SendEventError>((event, emit) {});
 
     on<SendEventStoped>((event, emit) {
+      emit(
+        state.copyWith(type: SendStateType.initialized, files: [], code: null),
+      );
       ConnectionManager.close();
     });
 
