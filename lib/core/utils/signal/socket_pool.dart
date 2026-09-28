@@ -34,13 +34,16 @@ class SocketPool {
   bool _closeReq = false;
 
   Future<void> _singleConnect(String relay) async {
+    WebSocketChannel? channel;
     try {
-      if (_closeReq && !_connected.isCompleted) {
-        _connected.complete(false);
+      if (_closeReq) {
+        if (!_connected.isCompleted) {
+          _connected.complete(false);
+        }
         return;
       }
       logger.d("try to connect to $relay");
-      final channel = WebSocketChannel.connect(Uri.parse(relay));
+      channel = WebSocketChannel.connect(Uri.parse(relay));
       await channel.ready.timeout(Duration(seconds: 10));
 
       channelManager[relay] = SocketChannel(
@@ -54,12 +57,21 @@ class SocketPool {
         _connected.complete(true);
       }
     } catch (e, s) {
-      if (_closeReq && !_connected.isCompleted) {
-        _connected.complete(false);
+      channel?.sink.close();
+      if (_closeReq) {
+        if (!_connected.isCompleted) {
+          _connected.complete(false);
+        }
         return;
       }
       logger.e("failed to connect to socket $relay", error: e, stackTrace: s);
       await Future.delayed(Duration(seconds: 3));
+      if (_closeReq) {
+        if (!_connected.isCompleted) {
+          _connected.complete(false);
+        }
+        return;
+      }
       _singleConnect(relay);
     }
   }

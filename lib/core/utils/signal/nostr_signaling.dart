@@ -151,10 +151,12 @@ class NostrSignaling {
             case 'init_handshake':
               if (role == Role.sender) {
                 if (peerHexPubKey != null) {
-                  await _sendNostrMessage({
-                    'type': 'reject',
-                    'sdp': 'rejected',
-                  }, pubKey: senderPubKey);
+                  if (peerHexPubKey != senderPubKey) {
+                    await _sendNostrMessage({
+                      'type': 'reject',
+                      'sdp': 'rejected',
+                    }, pubKey: senderPubKey);
+                  }
                 } else {
                   peerHexPubKey = senderPubKey;
 
