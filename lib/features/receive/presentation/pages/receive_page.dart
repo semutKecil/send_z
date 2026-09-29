@@ -257,7 +257,7 @@ class _ReceivePageState extends State<ReceivePage> {
                   builder: (context, state) {
                     return Expanded(
                       flex: 2,
-                      child: FileList(files: state.files),
+                      child: FileList(files: state.files, isSliver: false),
                     );
                   },
                 ),

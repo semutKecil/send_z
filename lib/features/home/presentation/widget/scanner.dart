@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class Scanner extends StatelessWidget {
-  final void Function(String barcode) onDetect;
+  final Function(String barcode) onDetect;
   const new({super.key, required this.onDetect});
 
   @override
   Widget build(BuildContext context) {
+    String? qrScanned;
     return Scaffold(
       appBar: AppBar(title: const Text('Scan SendZ QR')),
       backgroundColor: Colors.black,
@@ -15,24 +16,11 @@ class Scanner extends StatelessWidget {
           MobileScanner(
             onDetect: (barcodes) {
               final barcodeString = barcodes.barcodes.firstOrNull?.rawValue;
-              if (barcodeString == null) return;
+              if (barcodeString == null || qrScanned != null) return;
+              qrScanned = barcodeString;
               onDetect(barcodeString);
             },
           ),
-          // Align(
-          //   alignment: Alignment.bottomCenter,
-          //   child: Container(
-          //     alignment: Alignment.bottomCenter,
-          //     height: 100,
-          //     color: const Color.fromRGBO(0, 0, 0, 0.4),
-          //     child: Row(
-          //       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          //       children: [
-          //         Expanded(child: Center(child: _barcodePreview(_barcode))),
-          //       ],
-          //     ),
-          //   ),
-          // ),
         ],
       ),
     );

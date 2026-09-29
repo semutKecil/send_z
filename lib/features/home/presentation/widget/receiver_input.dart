@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:send_z/core/utils/logger.dart';
+import 'package:send_z/core/utils/utils.dart';
 import 'package:send_z/features/home/presentation/widget/scanner.dart';
-import 'package:send_z/main.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class ReceiverInput extends StatefulWidget {
   const new({super.key});
@@ -15,30 +15,49 @@ class ReceiverInput extends StatefulWidget {
 }
 
 class _ReceiverInputState extends State<ReceiverInput> {
-  final TextEditingController urlController = TextEditingController();
+  final TextEditingController _urlController = TextEditingController();
 
   @override
   void dispose() {
-    urlController.dispose();
+    _urlController.dispose();
     super.dispose();
   }
 
-  void _goToReceive(BuildContext context, String code) async {
-    String cleanCode = code;
-    if (code.contains("/")) {
-      cleanCode = code.split("/").last;
+  Future<void> _onUrlError(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Invalid Url"),
+          content: Text("Url you used are invalid"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+    if (context.mounted) {
+      AutoRouter.of(context).replacePath("/");
+    }
+  }
+
+  void _goToReceive(BuildContext context, String url) async {
+    if (url.isEmpty) return;
+    String cleanCode = url;
+    if (cleanCode.contains("/")) {
+      cleanCode = cleanCode.split("/").last;
     }
 
-    if (kIsWeb) {
-      if (!await launchUrl(
-        Uri.parse('$baseUrl#/$cleanCode'),
-        // '_blank' untuk tab baru, '_self' untuk tab yang sama
-        webOnlyWindowName: '_self',
-      )) {
-        throw Exception('Tidak dapat membuka $baseUrl#/$cleanCode');
-      }
-    } else {
+    try {
+      MessagePackager().decode(cleanCode);
       AutoRouter.of(context).replacePath("/$cleanCode");
+    } catch (e) {
+      _onUrlError(context);
     }
   }
 
@@ -64,7 +83,10 @@ class _ReceiverInputState extends State<ReceiverInput> {
                           },
                         ),
                       );
+
                       if (qrData != null && context.mounted) {
+                        // _urlController.text = qrData;
+                        logger.d("qr data $qrData");
                         _goToReceive(context, qrData);
                       }
                     },
@@ -79,13 +101,9 @@ class _ReceiverInputState extends State<ReceiverInput> {
             : SizedBox.shrink(),
         Expanded(
           child: TextField(
-            controller: urlController,
+            controller: _urlController,
             decoration: InputDecoration(
               hintText: "Insert Sendz Url or Scan QR",
-              // prefixIcon: FilledButton(
-              //   onPressed: () {},
-              //   child: Icon(Icons.qr_code_scanner),
-              // ),
             ),
             onSubmitted: (value) {
               _goToReceive(context, value);
@@ -97,7 +115,7 @@ class _ReceiverInputState extends State<ReceiverInput> {
           height: 42,
           child: FilledButton(
             onPressed: () {
-              _goToReceive(context, urlController.text);
+              _goToReceive(context, _urlController.text);
             },
             style: FilledButton.styleFrom(
               visualDensity: VisualDensity.compact,
