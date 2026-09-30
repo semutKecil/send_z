@@ -20,7 +20,6 @@ abstract class ConnectionManager {
   static Future<T> initConnection<T extends ConnectionManager>(
     T manager,
   ) async {
-    // await close();
     try {
       await GetIt.I.unregister<ConnectionManager>();
     } catch (_) {}

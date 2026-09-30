@@ -2,16 +2,17 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:nostr/nostr.dart';
 import 'package:send_z/core/model/connection_code.dart';
 import 'package:send_z/core/model/file_meta.dart';
 import 'package:send_z/core/model/message.dart';
 import 'package:send_z/core/utils/logger.dart';
-import 'package:send_z/core/utils/signal/nostr_signaling.dart';
+import 'package:send_z/core/utils/nostr_webrtc_connector/signal/nostr_signaling.dart';
 import 'package:send_z/core/utils/utils.dart';
 
-import '../downloader/file_downloader.dart';
+import '../../downloader/file_downloader.dart';
 
-import 'connection_manager.dart';
+import '../../connection_manager.dart';
 
 class ReceiverManager extends ConnectionManager {
   RTCPeerConnection? peerConnection;
@@ -39,41 +40,42 @@ class ReceiverManager extends ConnectionManager {
   Future<void> connect() async {
     try {
       final ConnectionCode cc = MessagePackager().decode(code);
-      if (cc case CodeNostrWebRtc(:final relays, :final npub, :final rtcConf)) {
-        signaling = NostrSignaling(
-          role: Role.receiver,
-          relays: relays,
-          onConnected: () async {
-            peerConnection = await createPeerConnection(rtcConf);
-            _setupReceiverListeners();
-            peerConnection?.onIceCandidate = (candidate) {
-              signaling?.sendIceCandidate(candidate);
-            };
+      // if (cc case ConnectionCode(:final relays, :final npub, :final rtcConf)) {
+      signaling = NostrSignaling(
+        keys: Keys.generate(),
+        role: Role.receiver,
+        relays: cc.usedRelays,
+        onConnected: () async {
+          peerConnection = await createPeerConnection(cc.usedRtcConf);
+          _setupReceiverListeners();
+          peerConnection?.onIceCandidate = (candidate) {
+            signaling?.sendIceCandidate(candidate);
+          };
 
-            signaling?.onOfferReceived = (offer) async {
-              await peerConnection?.setRemoteDescription(offer);
+          signaling?.onOfferReceived = (offer) async {
+            await peerConnection?.setRemoteDescription(offer);
 
-              RTCSessionDescription? answer = await peerConnection
-                  ?.createAnswer();
-              if (answer == null) return;
-              await peerConnection?.setLocalDescription(answer);
-              await signaling?.sendAnswer(answer);
-            };
+            RTCSessionDescription? answer = await peerConnection
+                ?.createAnswer();
+            if (answer == null) return;
+            await peerConnection?.setLocalDescription(answer);
+            await signaling?.sendAnswer(answer);
+          };
 
-            signaling?.onIceCandidateReceived = (candidate) async {
-              await peerConnection?.addCandidate(candidate);
-            };
-          },
-          onRejected: () async {
-            await closeWebRTC(disconnect: true, fromMessage: true);
-            onRejected();
-          },
-        );
-        await signaling?.connect();
-        await signaling?.connectToSender(npub);
-      } else {
-        throw Exception("Invalid url code");
-      }
+          signaling?.onIceCandidateReceived = (candidate) async {
+            await peerConnection?.addCandidate(candidate);
+          };
+        },
+        onRejected: () async {
+          await closeWebRTC(disconnect: true, fromMessage: true);
+          onRejected();
+        },
+      );
+      await signaling?.connect();
+      await signaling?.connectToSender(cc.npub);
+      // } else {
+      //   throw Exception("Invalid url code");
+      // }
     } catch (e, s) {
       logger.e('Failed to connect!', error: e, stackTrace: s);
       onUrlError();
@@ -123,27 +125,27 @@ class ReceiverManager extends ConnectionManager {
     );
 
     await channel.send(
-      RTCDataChannelMessage(jsonEncode(Message.readyReceive(id: file.id))),
+      RTCDataChannelMessage(jsonEncode(RtcMessage.readyReceive(id: file.id))),
     );
   }
 
   void _setupControlChannelListeners(RTCDataChannel channel) {
     channel.onMessage = (RTCDataChannelMessage msg) async {
       if (!msg.isBinary) {
-        final message = Message.fromJson(jsonDecode(msg.text));
+        final message = RtcMessage.fromJson(jsonDecode(msg.text));
         switch (message) {
-          case MessageFilesMeta(:final files):
+          case RtcMessageFilesMeta(:final files):
             this.files = files;
             onFileMetaReceived(files);
             _prepareReceiveFiles(channel);
             break;
-          case MessageBye(:final disconnect):
+          case RtcMessageBye(:final disconnect):
             await closeWebRTC(disconnect: disconnect, fromMessage: true);
             if (disconnect) {
               onDisconnected();
             }
             break;
-          case MessageReadyReceive():
+          case RtcMessageReadyReceive():
             break;
         }
       }
@@ -181,7 +183,9 @@ class ReceiverManager extends ConnectionManager {
     logger.d('Closing WebRTC resources on Receiver...');
     if (!fromMessage) {
       await controlChannel?.send(
-        RTCDataChannelMessage(jsonEncode(Message.bye(disconnect: disconnect))),
+        RTCDataChannelMessage(
+          jsonEncode(RtcMessage.bye(disconnect: disconnect)),
+        ),
       );
     }
     for (var element in transferStream.values) {

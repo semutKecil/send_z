@@ -19,7 +19,7 @@ class SocketPool {
 
   Future<void> connect() async {
     for (var relay in relays) {
-      _singleConnect(relay);
+      _singleConnect(relay, 0);
     }
 
     if (await _connected.future) {
@@ -33,7 +33,8 @@ class SocketPool {
   final List<String> _sentHistory = [];
   bool _closeReq = false;
 
-  Future<void> _singleConnect(String relay) async {
+  Future<void> _singleConnect(String relay, int atm) async {
+    if (atm > 3) return;
     WebSocketChannel? channel;
     try {
       if (_closeReq) {
@@ -72,7 +73,7 @@ class SocketPool {
         }
         return;
       }
-      _singleConnect(relay);
+      _singleConnect(relay, atm + 1);
     }
   }
 

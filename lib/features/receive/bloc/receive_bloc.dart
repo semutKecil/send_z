@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:send_z/core/model/file_meta.dart';
-import 'package:send_z/core/utils/tansfer/connection_manager.dart';
-import 'package:send_z/core/utils/tansfer/receiver_manager.dart';
+import 'package:send_z/core/utils/connection_manager.dart';
+import 'package:send_z/core/utils/nostr_webrtc_connector/webrtc/receiver_manager.dart';
 import 'package:send_z/features/transfer/bloc/transfer_bloc.dart';
 
 part 'receive_state.dart';

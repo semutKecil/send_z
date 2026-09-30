@@ -12,11 +12,12 @@ enum Role { sender, receiver }
 
 class NostrSignaling {
   final List<String> relays;
+  final Keys keys;
   final Role role;
   final void Function() onConnected;
   final void Function() onRejected;
 
-  late Keys _myKeychain;
+  // late Keys _myKeychain;
   String? peerHexPubKey;
 
   late final SocketPool _socketPool;
@@ -34,17 +35,18 @@ class NostrSignaling {
   Function(String peerPubKey)? onPeerConnected;
 
   NostrSignaling({
+    required this.keys,
     required this.role,
     required this.onConnected,
     required this.onRejected,
     required this.relays,
   }) {
-    _myKeychain = Keys.generate();
-    logger.d('nsec generated ${_myKeychain.nsec}');
+    // _myKeychain = Keys.generate();
+    logger.d('nsec generated ${keys.nsec}');
   }
 
   /// Mendapatkan Shareable Npub untuk ditaruh di URL (Khusus Sender)
-  String get shareableNpub => _myKeychain.npub;
+  String get shareableNpub => keys.npub;
 
   Future<void> connect() async {
     if (_dispose) return;
@@ -114,7 +116,7 @@ class NostrSignaling {
   void _subscribeToMyEvents() {
     final filter = {
       "kinds": [44],
-      "#p": [_myKeychain.public],
+      "#p": [keys.public],
     };
     final request = jsonEncode(["REQ", "sendz_signaling", filter]);
     logger.d('send init $request');
@@ -140,7 +142,7 @@ class NostrSignaling {
         final String decryptedJson = await Nip44.decrypt(
           payload: encryptedContent,
           senderPubkey: senderPubKey,
-          recipientSecretKey: _myKeychain.secret,
+          recipientSecretKey: keys.secret,
         );
 
         final List<dynamic> payloads = jsonDecode(decryptedJson);
@@ -227,16 +229,16 @@ class NostrSignaling {
 
       final String encryptedContent = await Nip44.encrypt(
         plaintext: encodedMessage,
-        senderSecretKey: _myKeychain.secret,
+        senderSecretKey: keys.secret,
         recipientPubkey: pubKey ?? peerHexPubKey!,
       );
 
       // Construct Nostr Event Kind 44
       final Event event = Event.from(
-        secretKey: _myKeychain.secret,
+        secretKey: keys.secret,
         kind: 44,
         content: encryptedContent,
-        pubkey: _myKeychain.public,
+        pubkey: keys.public,
         tags: [
           ['p', pubKey ?? peerHexPubKey!],
         ],

@@ -4,12 +4,13 @@ import 'dart:typed_data';
 import 'package:async/async.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:nostr/nostr.dart';
 import 'package:send_z/core/model/connection_code.dart';
 import 'package:send_z/core/model/file_meta.dart';
 import 'package:send_z/core/model/message.dart';
 import 'package:send_z/core/utils/logger.dart';
-import 'package:send_z/core/utils/tansfer/connection_manager.dart';
-import 'package:send_z/core/utils/signal/nostr_signaling.dart';
+import 'package:send_z/core/utils/connection_manager.dart';
+import 'package:send_z/core/utils/nostr_webrtc_connector/signal/nostr_signaling.dart';
 import 'package:send_z/core/utils/utils.dart';
 import 'package:send_z/main.dart';
 
@@ -19,8 +20,8 @@ class SenderManager extends ConnectionManager {
   RTCDataChannel? controlChannel;
   RTCDataChannel? fileChannel;
   NostrSignaling? _signaling;
-  final List<String> relays;
-  final Map<String, dynamic> webRtcConfig;
+  final List<String>? relays;
+  final Map<String, dynamic>? webRtcConfig;
   final List<PlatformFile> files;
 
   final Function(String code) codeGenerated;
@@ -32,19 +33,22 @@ class SenderManager extends ConnectionManager {
     required super.onDone,
     required super.onTransferFile,
     required this.codeGenerated,
-    this.relays = defaultRelay,
-    this.webRtcConfig = defaultRtcConfig,
+    this.relays,
+    this.webRtcConfig,
   });
 
   @override
   Future<void> connect() async {
     // 1. Inisialisasi Signaling
     _signaling = NostrSignaling(
+      keys: Keys.generate(),
       role: Role.sender,
-      relays: relays,
+      relays: relays ?? defaultRelay,
       onConnected: () async {
         // 2. Buat WebRTC PeerConnection
-        peerConnection = await createPeerConnection(webRtcConfig);
+        peerConnection = await createPeerConnection(
+          webRtcConfig ?? defaultRtcConfig,
+        );
 
         await _setupDataChannels();
         // 4. Handle ICE Candidates lokal -> Kirim ke Nostr
@@ -74,16 +78,14 @@ class SenderManager extends ConnectionManager {
       },
       onRejected: () {},
     );
-    await _signaling?.connect();
-    codeGenerated(
-      MessagePackager().encode(
-        ConnectionCode.nostrWebRtc(
-          relays: relays,
-          npub: _signaling!.shareableNpub,
-          rtcConf: webRtcConfig,
-        ),
-      ),
+    final codeUrl = ConnectionCode(
+      relays: relays,
+      npub: _signaling!.shareableNpub,
+      rtcConf: webRtcConfig,
     );
+
+    await _signaling?.connect();
+    codeGenerated(MessagePackager().encode(codeUrl));
   }
 
   // Method untuk mengirim chunk file
@@ -123,16 +125,16 @@ class SenderManager extends ConnectionManager {
   void _setupControlChannelListeners(RTCDataChannel channel) {
     channel.onMessage = (RTCDataChannelMessage msg) async {
       if (!msg.isBinary) {
-        final message = Message.fromJson(jsonDecode(msg.text));
+        final message = RtcMessage.fromJson(jsonDecode(msg.text));
         switch (message) {
-          case MessageFilesMeta():
+          case RtcMessageFilesMeta():
             break;
-          case MessageReadyReceive(:final id):
+          case RtcMessageReadyReceive(:final id):
             final file = files.where((file) => file.uri.path == id).firstOrNull;
             if (file == null) return;
             _streamLocalFile(platformFile: file, dataChannel: fileChannel!);
             break;
-          case MessageBye(:final disconnect):
+          case RtcMessageBye(:final disconnect):
             await closeWebRTC(disconnect: disconnect, fromMessage: true);
             if (disconnect) {
               onDisconnected();
@@ -160,7 +162,7 @@ class SenderManager extends ConnectionManager {
     await controlChannel?.send(
       RTCDataChannelMessage(
         jsonEncode(
-          Message.filesMeta(
+          RtcMessage.filesMeta(
             files: await Future.wait(files.map((e) => e.toFileMeta())),
           ),
         ),
@@ -236,7 +238,9 @@ class SenderManager extends ConnectionManager {
     isCLosed = true;
     if (!fromMessage) {
       await controlChannel?.send(
-        RTCDataChannelMessage(jsonEncode(Message.bye(disconnect: disconnect))),
+        RTCDataChannelMessage(
+          jsonEncode(RtcMessage.bye(disconnect: disconnect)),
+        ),
       );
     }
     _signaling?.dispose();

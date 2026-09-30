@@ -15,13 +15,14 @@ part 'message.freezed.dart';
 part 'message.g.dart';
 
 @freezed
-sealed class Message with _$Message {
-  const factory Message.filesMeta({required List<FileMeta> files}) =
-      MessageFilesMeta;
-  const factory Message.readyReceive({required String id}) =
-      MessageReadyReceive;
-  const factory Message.bye({@Default(false) bool disconnect}) = MessageBye;
+sealed class RtcMessage with _$RtcMessage {
+  const factory RtcMessage.filesMeta({required List<FileMeta> files}) =
+      RtcMessageFilesMeta;
+  const factory RtcMessage.readyReceive({required String id}) =
+      RtcMessageReadyReceive;
+  const factory RtcMessage.bye({@Default(false) bool disconnect}) =
+      RtcMessageBye;
 
-  factory Message.fromJson(Map<String, dynamic> json) =>
-      _$MessageFromJson(json);
+  factory RtcMessage.fromJson(Map<String, dynamic> json) =>
+      _$RtcMessageFromJson(json);
 }

@@ -46,7 +46,7 @@ class MessagePackager {
         },
       );
 
-      config.register<Message>(
+      config.register<RtcMessage>(
         extId: 2,
         polymorphic: true,
         encoder: (data, packer) => packer.packMap(data.toJson()),
@@ -59,7 +59,7 @@ class MessagePackager {
             }).toList();
           }
 
-          return Message.fromJson(map);
+          return RtcMessage.fromJson(map);
         },
       );
 
