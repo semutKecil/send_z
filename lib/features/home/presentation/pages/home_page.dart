@@ -33,8 +33,7 @@ class HomePage extends StatelessWidget {
                         padding: const EdgeInsets.all(16),
                         child: SvgPicture.asset(
                           'assets/images/sendz-transparent.svg',
-                          semanticsLabel:
-                              'A descriptive label for screen readers',
+                          semanticsLabel: 'Sendz..',
                         ),
                       ),
                     ),
@@ -61,7 +60,7 @@ class HomePage extends StatelessWidget {
                           return;
                         }
                       },
-                      child: Row(
+                      child: const Row(
                         spacing: 15,
                         children: [Icon(Icons.upload), Text("Send Files")],
                       ),

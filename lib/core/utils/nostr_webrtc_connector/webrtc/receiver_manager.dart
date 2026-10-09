@@ -23,6 +23,7 @@ class ReceiverManager extends ConnectionManager {
   final String code;
   final void Function(List<FileMeta> files) onFileMetaReceived;
   final void Function() onRejected;
+  final void Function() pairFailed;
   final void Function() onUrlError;
 
   new({
@@ -30,6 +31,7 @@ class ReceiverManager extends ConnectionManager {
     required this.onFileMetaReceived,
     required this.onRejected,
     required this.onUrlError,
+    required this.pairFailed,
     required super.onConnected,
     required super.onDisconnected,
     required super.onDone,
@@ -46,10 +48,17 @@ class ReceiverManager extends ConnectionManager {
         role: Role.receiver,
         relays: cc.usedRelays,
         onConnected: () async {
+          logger.i("pairing...");
           peerConnection = await createPeerConnection(cc.usedRtcConf);
           _setupReceiverListeners();
           peerConnection?.onIceCandidate = (candidate) {
             signaling?.sendIceCandidate(candidate);
+          };
+
+          peerConnection?.onIceConnectionState = (state) {
+            if (state == RTCIceConnectionState.RTCIceConnectionStateFailed) {
+              pairFailed();
+            }
           };
 
           signaling?.onOfferReceived = (offer) async {

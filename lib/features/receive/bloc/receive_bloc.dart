@@ -12,7 +12,7 @@ part 'receive_bloc.freezed.dart';
 class ReceiveBloc extends Bloc<ReceiveEvent, ReceiveState> {
   final TransferBloc transferBloc;
 
-  List<FileMeta> files = [];
+  // List<FileMeta> files = [];
 
   new({required this.transferBloc})
     : super(ReceiveState(type: ReceiveStateType.initialized)) {
@@ -41,12 +41,15 @@ class ReceiveBloc extends Bloc<ReceiveEvent, ReceiveState> {
           onUrlError: () {
             add(ReceiveEventUrlError());
           },
+          pairFailed: () {
+            add(ReceiveEventPairFailed());
+          },
         ),
       );
     });
 
     on<ReceiveEventConnected>((event, emit) {
-      files = event.files;
+      // files = event.files;
       emit(
         state.copyWith(type: ReceiveStateType.connected, files: event.files),
       );
@@ -72,6 +75,10 @@ class ReceiveBloc extends Bloc<ReceiveEvent, ReceiveState> {
 
     on<ReceiveEventUrlError>((event, emit) {
       emit(state.copyWith(type: ReceiveStateType.urlError));
+    });
+
+    on<ReceiveEventPairFailed>((event, emit) {
+      emit(state.copyWith(type: ReceiveStateType.pairFailed));
     });
   }
 }

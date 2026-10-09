@@ -7,6 +7,8 @@ import 'package:send_z/features/receive/bloc/receive_bloc.dart';
 import 'package:send_z/shared/widget/default_body.dart';
 import 'package:send_z/shared/widget/file_list.dart';
 
+import '../../../../core/utils/strings_const.dart';
+
 @RoutePage()
 class ReceivePage extends StatefulWidget {
   final String code;
@@ -23,37 +25,6 @@ class _ReceivePageState extends State<ReceivePage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       context.read<ReceiveBloc>().add(ReceiveEventStarted(code: widget.code));
-      // _sub = context.read<ReceiveBloc>().stream.listen((event) {
-      //   if (event case ReceiveEventFileDownload(:final file, :final stream)) {
-      //     if (mounted) {
-      //       showDialog(
-      //         context: context,
-      //         builder: (context) {
-      //           return AlertDialog(
-      //             title: Text("Download ${file.name}"),
-      //             actions: [
-      //               TextButton(
-      //                 onPressed: () async {
-      //                   await FileSaver.instance.saveAsStream(
-      //                     name: file.name,
-      //                     stream: stream,
-      //                     fileExtension: file.extension ?? "",
-      //                     mimeType:
-      //                         MimeType.values
-      //                             .where((mime) => mime.name == file.extension)
-      //                             .firstOrNull ??
-      //                         MimeType.other,
-      //                   );
-      //                 },
-      //                 child: Text("Download"),
-      //               ),
-      //             ],
-      //           );
-      //         },
-      //       );
-      //     }
-      //   }
-      // });
     });
   }
 
@@ -63,13 +34,17 @@ class _ReceivePageState extends State<ReceivePage> {
     super.dispose();
   }
 
-  Future<void> _onError(BuildContext context) async {
+  Future<void> _alerDialogSimple(
+    BuildContext context, {
+    required String title,
+    required String content,
+  }) async {
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("Connection Error"),
-          content: Text("Connectrion error please try again"),
+          title: Text(title),
+          content: Text(content),
           actions: [
             TextButton(
               onPressed: () {
@@ -81,98 +56,7 @@ class _ReceivePageState extends State<ReceivePage> {
         );
       },
     );
-    if (context.mounted) {
-      AutoRouter.of(context).replacePath("/");
-    }
-  }
 
-  Future<void> _onUrlError(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Invalid Url"),
-          content: Text("Url you used are invalid"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("OK"),
-            ),
-          ],
-        );
-      },
-    );
-    if (context.mounted) {
-      AutoRouter.of(context).replacePath("/");
-    }
-  }
-
-  Future<void> _onDisconnected(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Disconnected"),
-          content: Text("File transfer are disconnected"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("OK"),
-            ),
-          ],
-        );
-      },
-    );
-    if (context.mounted) {
-      AutoRouter.of(context).replacePath("/");
-    }
-  }
-
-  Future<void> _onDone(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Files Received"),
-          content: Text("All Files are saved"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("OK"),
-            ),
-          ],
-        );
-      },
-    );
-    if (context.mounted) {
-      AutoRouter.of(context).replacePath("/");
-    }
-  }
-
-  Future<void> _onRejected(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Already connected"),
-          content: Text("Already connected with other device"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("OK"),
-            ),
-          ],
-        );
-      },
-    );
     if (context.mounted) {
       AutoRouter.of(context).replacePath("/");
     }
@@ -187,19 +71,46 @@ class _ReceivePageState extends State<ReceivePage> {
           case ReceiveStateType.connected:
             break;
           case ReceiveStateType.error:
-            _onError(context);
+            _alerDialogSimple(
+              context,
+              title: StringsConst.alertsReceiveConnectionErrorTitle,
+              content: StringsConst.alertsReceiveConnectionErrorContent,
+            );
             break;
           case ReceiveStateType.disconnected:
-            _onDisconnected(context);
+            _alerDialogSimple(
+              context,
+              title: StringsConst.alertsDisconnectedTitle,
+              content: StringsConst.alertsDisconnectedContent,
+            );
             break;
           case ReceiveStateType.done:
-            _onDone(context);
+            _alerDialogSimple(
+              context,
+              title: StringsConst.alertsReceiveDoneTitle,
+              content: StringsConst.alertsReceiveDoneContent,
+            );
             break;
           case ReceiveStateType.rejected:
-            _onRejected(context);
+            _alerDialogSimple(
+              context,
+              title: StringsConst.alertsReceiveRejectedTitle,
+              content: StringsConst.alertsReceiveRejectedContent,
+            );
             break;
           case ReceiveStateType.urlError:
-            _onUrlError(context);
+            _alerDialogSimple(
+              context,
+              title: StringsConst.alertsReceiveInvalidUrlTitle,
+              content: StringsConst.alertsReceiveInvalidUrlContent,
+            );
+            break;
+          case ReceiveStateType.pairFailed:
+            _alerDialogSimple(
+              context,
+              title: StringsConst.alertsPairFailedTitle,
+              content: StringsConst.alertsPairFailedContent,
+            );
             break;
         }
       },
@@ -237,6 +148,7 @@ class _ReceivePageState extends State<ReceivePage> {
                       case ReceiveStateType.done:
                       case ReceiveStateType.urlError:
                       case ReceiveStateType.rejected:
+                      case ReceiveStateType.pairFailed:
                         content = SizedBox.shrink(key: ValueKey("none"));
                         break;
                     }
@@ -250,9 +162,10 @@ class _ReceivePageState extends State<ReceivePage> {
                 SizedBox(height: 10),
                 BlocBuilder<ReceiveBloc, ReceiveState>(
                   buildWhen: (previous, current) {
-                    return previous.type != current.type &&
-                        (previous.type == ReceiveStateType.connected ||
-                            current.type == ReceiveStateType.connected);
+                    return previous.files != current.files;
+                    // return previous.type != current.type &&
+                    //     (previous.type == ReceiveStateType.connected ||
+                    //         current.type == ReceiveStateType.connected);
                   },
                   builder: (context, state) {
                     return Expanded(

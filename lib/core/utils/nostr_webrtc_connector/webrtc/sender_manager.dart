@@ -25,6 +25,7 @@ class SenderManager extends ConnectionManager {
   final List<PlatformFile> files;
 
   final Function(String code) codeGenerated;
+  final void Function() pairFailed;
 
   new({
     required this.files,
@@ -33,6 +34,7 @@ class SenderManager extends ConnectionManager {
     required super.onDone,
     required super.onTransferFile,
     required this.codeGenerated,
+    required this.pairFailed,
     this.relays,
     this.webRtcConfig,
   });
@@ -46,6 +48,7 @@ class SenderManager extends ConnectionManager {
       relays: relays ?? defaultRelay,
       onConnected: () async {
         // 2. Buat WebRTC PeerConnection
+        logger.i("pairing...");
         peerConnection = await createPeerConnection(
           webRtcConfig ?? defaultRtcConfig,
         );
@@ -54,6 +57,12 @@ class SenderManager extends ConnectionManager {
         // 4. Handle ICE Candidates lokal -> Kirim ke Nostr
         peerConnection?.onIceCandidate = (candidate) {
           _signaling?.sendIceCandidate(candidate);
+        };
+
+        peerConnection?.onIceConnectionState = (state) {
+          if (state == RTCIceConnectionState.RTCIceConnectionStateFailed) {
+            logger.w("ICE connection failed");
+          }
         };
 
         // 5. Handle ketika Receiver terhubung

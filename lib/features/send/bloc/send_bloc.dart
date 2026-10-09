@@ -41,6 +41,7 @@ class SendBloc extends Bloc<SendEvent, SendState> {
           codeGenerated: (String code) {
             add(SendEventLinkGenerated(code: code));
           },
+          pairFailed: () {},
         ),
       );
     });
